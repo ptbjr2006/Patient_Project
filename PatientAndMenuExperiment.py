@@ -105,10 +105,11 @@ nurse_directory_frame = Frame(nurse_directory_window,
                           bg="#DB7E0E",
                           relief=RIDGE,
                           borderwidth=5,
-                          width=800,
+                          width=400,
+                          height=400
                           )
 nurse_directory_frame.place(x=350, y=150)
-nurse_directory_frame.pack(fill="y")
+nurse_directory_frame.pack_propagate(False)
 
 nurse_directory_exit_button = Button(nurse_directory_window,
                                     text="Back to menu",
@@ -358,7 +359,7 @@ class Nurse:
     def create_nurse_profile(cls, nurse_name, nurse_id):
         nurse = Nurse(nurse_name, nurse_id)
         nurse_list.append(nurse)
-        add_to_nurse_directory(nurse_name, nurse_id)
+        
         return nurse
         
     def add_patient(self, patient):
@@ -479,9 +480,10 @@ class Patient:
 
 
 #Button function to save new nurse and open profile
-def SaveNewNurse(name, id, old_window=new_nurse_window):
+def SaveNewNurse(name, id):
     nurse = Nurse.create_nurse_profile(name, id)
-    OpenNewWindow(nurse.nurse_profile, old_window)
+    OpenNewWindow(nurse.nurse_profile, new_nurse_window)
+    add_to_nurse_directory(name, id)
     new_nurse_name_input.delete(0, END)
     new_nurse_id_input.delete(0, END)
 
@@ -493,12 +495,13 @@ def OpenNewWindow(open_window, close_window):
 
 #Function to refresh nurse directory
 def add_to_nurse_directory(name, id):
+    next_row = nurse_directory_frame.grid_size()[1]
     nurse_label = Label(nurse_directory_frame,
-                        text=f"Name: {name}, ID: {id}, Profile:",
+                        text=f"Name: {name},   |    ID: {id},     |  Profile:",
                         font=("Arial", 12),
                         bg="#DB7E0E",
                         fg="White")
-    nurse_label.pack()
+    nurse_label.grid(row=next_row, column=0, padx=10, pady=10)
     nurse_profile_button = Button(nurse_directory_frame,
                                 text="View Profile",
                                 bg="#ECBD83",
@@ -506,7 +509,7 @@ def add_to_nurse_directory(name, id):
                                 width=10,
                                 #command=lambda : OpenNewWindow(nurse_list[nurse].nurse_profile, nurse_directory_window)
                                     )
-    nurse_profile_button.pack()
+    nurse_profile_button.grid(row=next_row, column=1, padx=10, pady=10)
     #add args to this function when called to use info from nurse entries
 
 #Call function to get patient info
@@ -525,16 +528,3 @@ patient_input_window.mainloop()
 new_nurse_window.mainloop()
 nurse_directory_window.mainloop()
 
-
-def foo(x,y):
-    '''
-    adding x and y randomly\n 
-    \t hahahahhahahaha jejejejejjejejeejeje
-    '''
-    return x+y
-
-
-
-
-
-foo(3,4)
