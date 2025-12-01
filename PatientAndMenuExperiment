@@ -1,9 +1,85 @@
 from tkinter import *
-
+from nurse_class import Nurse
 
 
 '''
+                                            LOGIN WINDOW
+'''
 
+login_window = Tk()
+login_window.title("Login")
+login_window.config(bg="#ECBD83")
+login_window.geometry("1000x600")
+login_title = Label(login_window,
+                    text="UT Health Nurse Login", 
+                    font=("Arial", 24), 
+                    bg="#DB7E0E", 
+                    fg="white",
+                    padx=20,
+                    pady=20,
+                    relief=RIDGE,
+                    borderwidth=5)
+login_title.place(x=500, y=100, anchor=CENTER)
+
+login_frame = Frame(login_window,
+                    bg="#DB7E0E",
+                    relief=RIDGE,
+                    borderwidth=5,
+                    width=400,
+                    height=300)
+login_frame.place(x=500, y=400, anchor=CENTER)
+login_frame.pack_propagate(False)
+
+username_label = Label(login_frame,
+                    text="Please enter your username to login:",
+                    fg="white",
+                    bg="#DB7E0E",
+                    font=("Arial", 16))
+username_label.pack(padx=20, pady=20)
+
+
+
+#Username entry
+user_input = Entry(login_frame,
+                    font=("Arial", 16),
+                    bg="#FFFFFF",
+                    fg="Black",
+                    width=30,)
+
+user_input.place(x=15, y=70)
+username = user_input.get() #is this line necessary?
+
+
+#Password entry
+password_label = Label(login_frame,
+                       text="Enter your password:",
+                       font=("Arial", 16),
+                       bg="#DB7E0E",
+                       fg="White",
+                       width=30)
+password_label.place(x=15, y=120)   
+
+password_input = Entry(login_frame,
+                       font=("Arial", 16),
+                       bg="#FFFFFF",
+                       fg="Black",
+                       show="*",
+                       width=30)
+password_input.place(x=15, y=160)
+password = password_input.get() #is this line necessary?
+
+#Login button
+login_button = Button(login_frame,
+                      text="Login",
+                      font=("Arial", 16),
+                      bg="#ECBD83",
+                      fg="Black",
+                      command=lambda: OpenNewWindow(menu_window, login_window), #This needs to be changed to CheckLogin()
+                      width=10,)
+login_button.place(x=130, y=220)
+
+
+'''
                                             MENU WINDOW
 
 '''
@@ -176,6 +252,16 @@ patient_cancel_input_button = Button(patient_input_window,
 patient_cancel_input_button.place(x=20, y=20)
 
 
+patient_submit_input_button = Button(patient_input_window,
+                                    text="Save info and assign patient",
+                                    bg="white",
+                                    fg="black",
+                                    command=lambda: print("Patient info submitted"),  # Placeholder for submission function
+                                    width=20,
+                                    height=2)
+patient_submit_input_button.place(x=825, y=525)
+
+
 
 '''
                                                 PATIENT CLASS
@@ -185,25 +271,22 @@ class Patient:
     
     patient_categories = ["Neuro", "Psychosocial", "Safety", "Hemodynamic Stability", 
             "Drains", "ADLs", "Meds", "Wound Care", "Discharge"]
-    def __init__(self, patient_name, admission_date, treatment_needs):
-        self.patient_name = ""
-        self.admission_date = ""
-        self.treatment_needs = []
-        self.severity_vector = []
+    def __init__(self, patient_name, admission_date, treatment_needs, severity_vector):
+        self.patient_name = patient_name
+        self.admission_date = admission_date
+        self.treatment_needs = treatment_needs
+        self.severity_vector = severity_vector
+        #this is internal VVV
         self.severity_sum = 0
         self.patient_record = {"Name": self.patient_name,
                                "Admission Date": self.admission_date,
                                "Treatment Needs": self.treatment_needs,
                                "Severity Vector": self.severity_vector}
-
-    
+        self.treatment_description = f"Neuro: {self.treatment_needs[0]}, Psychosocial: {self.treatment_needs[1]}, Safety: {self.treatment_needs[2]}, Hemodynamic Stability: {self.treatment_needs[3]}, Drains: {self.treatment_needs[4]}, ADLs: {self.treatment_needs[5]}, Meds: {self.treatment_needs[6]}, Wound Care: {self.treatment_needs[7]}, Discharge: {self.treatment_needs[8]}"
     def get_patient_info(self):
         
         new_patient = Patient("", "", [], [])
 
-
-        
-        
 
         #Fill in admission date   
         self.admission_date = input("Enter admission date (MM/DD/YYYY): ")
@@ -226,10 +309,13 @@ class Patient:
             self.severity_sum += i
         if self.severity_sum < low_severity_threshold:
             self.severity_vector = [1, 0, 0]
+            self.severity_description = "Low"
         elif self.severity_sum < high_severity_threshold:
             self.severity_vector = [0, 1, 0]
+            self.severity_description = "Medium"
         elif self.severity_sum >= high_severity_threshold and high_severity_threshold < 19:
             self.severity_vector = [0, 0, 1]
+            self.severity_description = "High"
 
         #Update patient record
         self.patient_record = {"Name": self.patient_name,
@@ -239,15 +325,56 @@ class Patient:
         #Add patient record to list
         print(self.patient_record)
 
-'''
-11/20 12.31p - I am trying to debug the function that returns to the main window from the patient input window,
-but I can't compile because both scripts call each other. So I am debating defining my patient window outside 
-of this function and moving the function that opens it to the MenuGUI script.
 
-'''
-#def open_patient_input():
-    #tkinter input labels and entry boxes
-        #ask Nan how to fix this so it doesnt need to be global
+
+def assign_patient_to_nurse(patient):
+    '''
+        
+        #Zero all indices and sums
+    
+        Workload_avg = 0
+        Workload_sum = 0
+        Step_2_list = []
+        for nurse in nurse_list:
+            nurse.Q_Index = 0
+            nurse.T_Index = 0
+            nurse.S_Index = 0
+            nurse.T_sum = 0
+            nurse.num_Ts = 0
+        
+        #STEP 1
+        
+        for nurse in nurse_list:
+            Workload_sum += nurse.workload
+        Workload_avg = Workload_sum / len(nurse_list)
+        for nurse in nurse_list:
+            if nurse.workload < Workload_avg:
+                Step_2_list.append(nurse)
+        
+        #STEP 2
+        
+        for nurse in Step_2_list:
+            
+            #Calculate Q, T, S indices
+            #T calculated by sum of treatment calegories of same index where patient treatment = 2
+            for i in range (Len(patient.treatment_needs)):
+                if patient.treatment_needs[i] == 2:
+                    nurse.T_sum += nurse.treatment_capabilities[i]
+                    Num_Ts += 1
+            nurse.T_Index = nurse.T_sum / Num_Ts
+            for i in patient.severity_vector:
+                if i == 1:
+                    nurse.S_Index = nurse.sevWorkload[i]
+            nurse.Q_Index = ((1/(1 + nurse.T_Index)) + (1/(1 + nurse.S_Index)))
+
+        assign_this_nurse = max(Step_2_list, key=lambda nurse: nurse.Q_Index)
+        
+        
+                
+                
+            
+        '''
+
         
        # patient_input_window.mainloop()
       #  return patient_input_window
@@ -264,8 +391,9 @@ def OpenNewWindow(open_window, close_window):
 
 
 
-
+menu_window.withdraw()
 patient_input_window.withdraw()
+login_window.mainloop()
 menu_window.mainloop()
 patient_input_window.mainloop()
 
