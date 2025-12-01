@@ -1,5 +1,6 @@
 from tkinter import *
 
+nurse_list = []
 
 class Nurse:
     def __init__(self, name, id):
@@ -49,7 +50,13 @@ class Nurse:
             patient_label.pack()
         
         return Nurse(name, id)
-
+    
+    def create_nurse_profile(self):
+        self.name = new_nurse_name_input.get()
+        self.id = new_nurse_id_input.get()
+        nurse_list.append(Nurse(self.name, self.id))
+        return
+        
     def add_patient(self, patient):
         self.patient_list.append(patient) #Should I make a list instance variable for a patient that includes name, admission date, treatement list, and severity level?
         for treatment in patient.treatment_needs:
