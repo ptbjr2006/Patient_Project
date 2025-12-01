@@ -123,6 +123,7 @@ nurse_directory_exit_button.place(x=20, y=20)
 '''
                                             PATIENT INPUT WINDOW
 '''
+# PATIENT INPUT WINDOW
 
 patient_data_file = []
 high_severity_threshold = 10
@@ -194,11 +195,11 @@ patient_treatment_input = Entry(patient_input_frame,
 patient_treatment_input.place(x=15, y=330)
         
         
-'''
-        self.patient_name = patient_name_input.get()
-        self.admission_date = patient_date_input.get()
-        self.treatment_needs = list(map(int, patient_treatment_input.get().split()))
-'''
+
+        #self.patient_name = patient_name_input.get()
+        #self.admission_date = patient_date_input.get()
+        #self.treatment_needs = list(map(int, patient_treatment_input.get().split()))
+
         
 
 
@@ -427,57 +428,55 @@ class Patient:
         print(new_patient.patient_record)
         patient_data_file.append(new_patient.patient_record)
 
-#def assign_patient_to_nurse(patient):
-'''
-        
-        #Zero all indices and sums
+
+# def assign_patient_to_nurse(patient):
+#     #Zero all indices and sums
+
+#     Workload_avg = 0
+#     Workload_sum = 0
+#     Step_2_list = []
+#     for nurse in nurse_list:
+#         nurse.Q_Index = 0
+#         nurse.T_Index = 0
+#         nurse.S_Index = 0
+#         nurse.T_sum = 0
+#         nurse.num_Ts = 0
     
-        Workload_avg = 0
-        Workload_sum = 0
-        Step_2_list = []
-        for nurse in nurse_list:
-            nurse.Q_Index = 0
-            nurse.T_Index = 0
-            nurse.S_Index = 0
-            nurse.T_sum = 0
-            nurse.num_Ts = 0
+#     #STEP 1
+    
+#     for nurse in nurse_list:
+#         Workload_sum += nurse.workload
+#     Workload_avg = Workload_sum / len(nurse_list)
+#     for nurse in nurse_list:
+#         if nurse.workload < Workload_avg:
+#             Step_2_list.append(nurse)
+    
+#     #STEP 2
+    
+#     for nurse in Step_2_list:
         
-        #STEP 1
-        
-        for nurse in nurse_list:
-            Workload_sum += nurse.workload
-        Workload_avg = Workload_sum / len(nurse_list)
-        for nurse in nurse_list:
-            if nurse.workload < Workload_avg:
-                Step_2_list.append(nurse)
-        
-        #STEP 2
-        
-        for nurse in Step_2_list:
-            
-            #Calculate Q, T, S indices
-            #T calculated by sum of treatment calegories of same index where patient treatment = 2
-            for i in range (Len(patient.treatment_needs)):
-                if patient.treatment_needs[i] == 2:
-                    nurse.T_sum += nurse.treatment_capabilities[i]
-                    Num_Ts += 1
-            nurse.T_Index = nurse.T_sum / Num_Ts
-            for i in patient.severity_vector:
-                if i == 1:
-                    nurse.S_Index = nurse.sevWorkload[i]
-            nurse.Q_Index = ((1/(1 + nurse.T_Index)) + (1/(1 + nurse.S_Index)))
+#         #Calculate Q, T, S indices
+#         #T calculated by sum of treatment calegories of same index where patient treatment = 2
+#         for i in range (Len(patient.treatment_needs)):
+#             if patient.treatment_needs[i] == 2:
+#                 nurse.T_sum += nurse.treatment_capabilities[i]
+#                 Num_Ts += 1
+#         nurse.T_Index = nurse.T_sum / Num_Ts
+#         for i in patient.severity_vector:
+#             if i == 1:
+#                 nurse.S_Index = nurse.sevWorkload[i]
+#         nurse.Q_Index = ((1/(1 + nurse.T_Index)) + (1/(1 + nurse.S_Index)))
 
-        assign_this_nurse = max(Step_2_list, key=lambda nurse: nurse.Q_Index)
+#     assign_this_nurse = max(Step_2_list, key=lambda nurse: nurse.Q_Index)
         
         
-                
-                
-'''
+
+
 
         
-'''
-                                                        MISC FUNCTIONS
-'''
+
+#                                                        MISC FUNCTIONS
+
 
 #Button function to save new nurse and open profile
 def SaveNewNurse(name, id, old_window=new_nurse_window):
@@ -517,7 +516,25 @@ patient_input_window.withdraw()
 new_nurse_window.withdraw()
 nurse_directory_window.withdraw()
 
+
+
+
+
 menu_window.mainloop()
 patient_input_window.mainloop()
 new_nurse_window.mainloop()
 nurse_directory_window.mainloop()
+
+
+def foo(x,y):
+    '''
+    adding x and y randomly\n 
+    \t hahahahhahahaha jejejejejjejejeejeje
+    '''
+    return x+y
+
+
+
+
+
+foo(3,4)
