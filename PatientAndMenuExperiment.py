@@ -1,5 +1,5 @@
 from tkinter import *
-
+import pdb
 
 
 '''
@@ -33,7 +33,7 @@ menu_workload_frame.place(x=350, y=150)
 
 #Labels
 
-menu_welcome_text = "Welcome, [Nurse Name]!"  # Placeholder for dynamic nurse name
+menu_welcome_text = "hello fellow nurses"  # Placeholder for dynamic nurse name
 menu_title = Label(menu_window,
                 text=menu_welcome_text,
                 font=("Arial", 24),
@@ -46,13 +46,15 @@ menu_title = Label(menu_window,
 menu_title.place(x=500, y=100, anchor=CENTER)
 
 menu_workload_text = Label(menu_workload_frame,
-                        text="You currently have [X] patients assigned",
+                        text="hello",
                         font=("Arial", 12),
                         bg="#DB7E0E",
                         fg="White",
                         padx=10,
                         pady=10)  # Placeholder for dynamic patient count)
 menu_workload_text.pack()
+
+
 
 #Buttons
 
@@ -72,7 +74,7 @@ menu_button_new_patient = Button(menu_button_frame,
                                 fg="Black",
                                 width=20,
                                 height=5)   
-menu_button_new_patient.place(x=200, y=50)
+menu_button_new_patient.place(x=50, y=50)
 
 menu_button_new_nurse = Button(menu_button_frame,
                                      text="New Nurse Profile",
@@ -91,6 +93,16 @@ menu_button_nurse_directory = Button(menu_button_frame,
                                      width=20,
                                      height=5)
 menu_button_nurse_directory.place(x=200, y=150)
+
+menu_button_patient_directory = Button(menu_button_frame,
+                                     text="Patient Directory",
+                                     bg="#ECBD83",
+                                     fg="black",
+                                     command=lambda : OpenNewWindow(patient_directory_window, menu_window),
+                                     width=20,
+                                     height=5)
+menu_button_patient_directory.place(x=200, y=50)
+
 
 '''
                                             NURSE DIRECTORY WINDOW
@@ -119,6 +131,33 @@ nurse_directory_exit_button = Button(nurse_directory_window,
                                     width=20,
                                     height=2)
 nurse_directory_exit_button.place(x=20, y=20)
+
+
+
+#                               PATIENT DIRECTORY WINDOW HERE
+
+patient_directory_window = Tk()
+patient_directory_window.geometry("1000x600")
+patient_directory_window.title("Patient Directory")
+patient_directory_window.config(bg="#ECBD83")
+
+patient_directory_frame = Frame(patient_directory_window,
+                          bg="#DB7E0E",
+                          relief=RIDGE,
+                          borderwidth=5,
+                          width=800,
+                          )
+patient_directory_frame.place(x=500, y=150)
+patient_directory_frame.pack(fill="y")
+
+patient_directory_exit_button = Button(patient_directory_window,
+                                    text="Back to menu",
+                                    bg="white",
+                                    fg="black",
+                                    command=lambda: OpenNewWindow(menu_window, patient_directory_window),
+                                    width=20,
+                                    height=2)
+patient_directory_exit_button.place(x=30, y=20)
 
 
 '''
@@ -201,10 +240,7 @@ patient_treatment_input.place(x=15, y=330)
         #self.admission_date = patient_date_input.get()
         #self.treatment_needs = list(map(int, patient_treatment_input.get().split()))
 
-        
 
-
-        #need to code 'exit' button to close window without saving data
 patient_cancel_input_button = Button(patient_input_window,
                                     text="Back to menu",
                                     bg="white",
@@ -213,6 +249,18 @@ patient_cancel_input_button = Button(patient_input_window,
                                     width=20,
                                     height=2)
 patient_cancel_input_button.place(x=20, y=20)
+
+new_patient_save_button = Button(patient_input_frame,
+                                text="Save Patient",
+                                bg="white",
+                                fg="black",
+                                command=lambda: SaveNewPatient(patient_name_input.get(), patient_date_input.get(), patient_treatment_input.get()),
+                                #check function here ^^^^
+                                
+                                width=20,
+                                height=2)
+new_patient_save_button.place(x=400, y=350)
+
 
 '''
                                                 NEW NURSE WINDOW
@@ -288,6 +336,38 @@ new_nurse_save_input_button = Button(new_nurse_frame,
 new_nurse_save_input_button.place(x=300, y=250)
 
 
+#                                               NOTIFICATION WINDOW
+notification_window = Toplevel()
+notification_window.geometry("400x300")
+notification_window.title("Patient Assigned!")
+notification_window.config(bg="#ECBD83")
+
+notification_frame = Frame(notification_window,
+                    bg="#DB7E0E",
+                    relief=RIDGE,
+                    borderwidth=5,
+                    width=300,
+                    height=200)
+notification_frame.place(x=200, y=150, anchor=CENTER)
+
+notification_label = Label(notification_frame,
+                            text="",
+                            fg="white",
+                            bg="#DB7E0E",
+                            font=("Arial", 10))
+notification_label.place(x=40, y=50)
+
+notification_button = Button(notification_frame,
+                             text="Return to menu",
+                             bg="white",
+                             fg="black",
+                             command=lambda : OpenNewWindow(menu_window, notification_window),
+                             width=20,
+                             height=2)
+notification_button.place(x=80, y=100)
+
+
+
 
 '''
                                                 NURSE CLASS
@@ -359,16 +439,26 @@ class Nurse:
     def create_nurse_profile(cls, nurse_name, nurse_id):
         nurse = Nurse(nurse_name, nurse_id)
         nurse_list.append(nurse)
-        
+        print(nurse_list)
         return nurse
-        
-    def add_patient(self, patient):
-        self.patient_list.append(patient) #Should I make a list instance variable for a patient that includes name, admission date, treatement list, and severity level?
-        for treatment in patient.treatment_needs:
-            self.treatment_workload[treatment] += treatment
-            self.workload += treatment
-        for severity in patient.severity_vector:
-            self.severity_workload[severity] += severity
+    
+    def __repr__(self):
+        return f"{self.name}"
+    
+    def refresh_patient_display(self):
+    # Clear existing labels
+        for widget in self.nurse_profile_main_frame.winfo_children():
+            widget.destroy()
+
+    # Re-add all patients in the list
+        for p in self.patient_list:
+            Label(
+            self.nurse_profile_main_frame,
+            text=f"Patient: {p['Name']}  |  Admission Date: {p['Admission Date']}  |  Treatments: {p['Treatment Needs']}  |  Severity: {p['Severity Vector']}",
+            font=("Arial", 14),
+            bg="#DB7E0E",
+            fg="white"
+            ).pack()
 
 '''
                                                 PATIENT CLASS
@@ -378,103 +468,114 @@ class Patient:
     
     patient_categories = ["Neuro", "Psychosocial", "Safety", "Hemodynamic Stability", 
             "Drains", "ADLs", "Meds", "Wound Care", "Discharge"]
-    def __init__(self, patient_name, admission_date, treatment_needs, severity_vector):
+    def __init__(self, patient_name, admission_date, treatment_needs):
         self.patient_name = patient_name
         self.admission_date = admission_date
         self.treatment_needs = treatment_needs
-        self.severity_vector = severity_vector
+        self.severity_vector = [0, 0, 0]
         #this is internal VVV
         self.severity_sum = 0
         self.patient_record = {"Name": self.patient_name,
                                "Admission Date": self.admission_date,
                                "Treatment Needs": self.treatment_needs,
                                "Severity Vector": self.severity_vector}
+    
+    @classmethod
+    def create_patient(cls, name, date, treatment_needs):
+        treatment_needs = list(map(int, treatment_needs.split()))
+        patient = Patient(name, date, treatment_needs)
+        patient_data_file.append(patient)
+        
+         #Create severity vector
+        for treatment in patient.treatment_needs:
+            patient.severity_sum += treatment
+        if patient.severity_sum < low_severity_threshold:
+            patient.severity_vector = [1, 0, 0]     
+        elif patient.severity_sum < high_severity_threshold:
+            patient.severity_vector = [0, 1, 0]
+        elif patient.severity_sum >= high_severity_threshold and high_severity_threshold < 19:
+            patient.severity_vector = [0, 0, 1]
+
+         #Update patient record
+        patient.patient_record = {"Name": patient.patient_name,
+                       "Admission Date": patient.admission_date,
+                       "Treatment Needs": patient.treatment_needs,
+                       "Severity Vector": patient.severity_vector}
+         
+        return patient   
+     
+    def __repr__(self):
+        return f"{self.patient_name}"
+
+
+#DECISION FUNCTION
+
+def assign_patient_to_nurse(patient):
+    #Zero all indices and sums
+    workload_avg = 0
+    workload_sum = 0
+    eligible_nurse_list = []
+    for nurse in nurse_list:
+        nurse.Q_Index = 0
+        nurse.T_Index = 0
+        nurse.S_Index = 0
+        nurse.T_sum = 0
+        nurse.num_Ts = 0
+    
+
+    #STEP 1(Get nurses with work < avg work)
+    workload_sum = sum(nurse.workload for nurse in nurse_list)
+    workload_avg = workload_sum / len(nurse_list)
+
+    #STEP 2(Assign eligible nurses to new list)
+    eligible_nurse_list = [nurse for nurse in nurse_list if nurse.workload <= workload_avg]
+
+    #STEP 3(Select appropriate nurse for assignment)
+    for nurse in eligible_nurse_list:
+        
+        #Calculate Q, T, S indices
+        #T calculated by sum of treatment calegories of same index where patient treatment = 2
+        for i in range (len(patient.treatment_needs)):
+            if patient.treatment_needs[i] == 2:
+                nurse.T_sum += nurse.treatment_workload[i]
+                nurse.num_Ts += 1
+            
+        if nurse.num_Ts > 0:
+            nurse.T_Index = nurse.T_sum / nurse.num_Ts
+        else: nurse.num_Ts = 0
+        
+        #S calculated by finding nurse severity workload with same index as patient severity    
+        for index, item in enumerate(patient.severity_vector):
+                if item == 1:
+                    nurse.S_Index = nurse.severity_workload[index]
+
+        #Calculate Q from S and T
+        nurse.Q_Index = ((1/(1 + nurse.T_Index)) + (1/(1 + nurse.S_Index)))
+
+    #Assignment
+    assign_to_this_nurse= max(eligible_nurse_list, key=lambda nurse: nurse.Q_Index)
+        
+    assign_to_this_nurse.patient_list.append(patient.patient_record)
+    
+    #Update treatment workload and total workload
+    for i in range(len(assign_to_this_nurse.treatment_workload)):
+        assign_to_this_nurse.treatment_workload[i] += patient.treatment_needs[i]
+        assign_to_this_nurse.workload += patient.treatment_needs[i]
+    #Update severity workload
+    for i in range(len(assign_to_this_nurse.severity_workload)):
+        assign_to_this_nurse.severity_workload[i] += patient.severity_vector[i]
+    
+    assign_to_this_nurse.refresh_patient_display()
+    
+    print(patient.treatment_needs)
+    print(patient.severity_vector)
+    print(nurse.treatment_workload)
+    print(nurse.severity_workload)
+    return assign_to_this_nurse
 
     
-    def get_patient_info(self):
-        
-        new_patient = Patient("", "", [], [])
-
-    #Fill in admission date   
-        new_patient.admission_date = input("Enter admission date (MM/DD/YYYY): ")
-       
-    #Fill in treatment needs
-
-        
-        print("On a scale of 0-2, rate the level of care needed for each of the following categories:")
-        for category in new_patient.patient_categories:
-            print(f"{category}: ")
-            input_value=input()
-        if input_value >= '0' and input_value <= '2':
-            new_patient.treatment_needs.append(int(input_value))
-        else:
-            print("Invalid input. Please enter a number between 0 and 2.")
-        
-        #Create severity vector
-        for i in new_patient.treatment_needs:
-            new_patient.severity_sum += i
-        if new_patient.severity_sum < low_severity_threshold:
-            new_patient.severity_vector = [1, 0, 0]
-        elif new_patient.severity_sum < high_severity_threshold:
-            new_patient.severity_vector = [0, 1, 0]
-        elif new_patient.severity_sum >= high_severity_threshold and high_severity_threshold < 19:
-            new_patient.severity_vector = [0, 0, 1]
-
-        #Update patient record
-        new_patient.patient_record = {"Name": new_patient.patient_name,
-                       "Admission Date": new_patient.admission_date,
-                       "Treatment Needs": new_patient.treatment_needs,
-                       "Severity Vector": new_patient.severity_vector}
-        #Add patient record to list
-        print(new_patient.patient_record)
-        patient_data_file.append(new_patient.patient_record)
-
-
-# def assign_patient_to_nurse(patient):
-#     #Zero all indices and sums
-
-#     Workload_avg = 0
-#     Workload_sum = 0
-#     Step_2_list = []
-#     for nurse in nurse_list:
-#         nurse.Q_Index = 0
-#         nurse.T_Index = 0
-#         nurse.S_Index = 0
-#         nurse.T_sum = 0
-#         nurse.num_Ts = 0
-    
-#     #STEP 1
-    
-#     for nurse in nurse_list:
-#         Workload_sum += nurse.workload
-#     Workload_avg = Workload_sum / len(nurse_list)
-#     for nurse in nurse_list:
-#         if nurse.workload < Workload_avg:
-#             Step_2_list.append(nurse)
-    
-#     #STEP 2
-    
-#     for nurse in Step_2_list:
-        
-#         #Calculate Q, T, S indices
-#         #T calculated by sum of treatment calegories of same index where patient treatment = 2
-#         for i in range (Len(patient.treatment_needs)):
-#             if patient.treatment_needs[i] == 2:
-#                 nurse.T_sum += nurse.treatment_capabilities[i]
-#                 Num_Ts += 1
-#         nurse.T_Index = nurse.T_sum / Num_Ts
-#         for i in patient.severity_vector:
-#             if i == 1:
-#                 nurse.S_Index = nurse.sevWorkload[i]
-#         nurse.Q_Index = ((1/(1 + nurse.T_Index)) + (1/(1 + nurse.S_Index)))
-
-#     assign_this_nurse = max(Step_2_list, key=lambda nurse: nurse.Q_Index)
-        
-        
-
-
-
-        
+   
+ 
 
 #                                                        MISC FUNCTIONS
 
@@ -483,10 +584,20 @@ class Patient:
 def SaveNewNurse(name, id):
     nurse = Nurse.create_nurse_profile(name, id)
     OpenNewWindow(nurse.nurse_profile, new_nurse_window)
-    add_to_nurse_directory(name, id)
+    add_to_nurse_directory(name, id, nurse)
     new_nurse_name_input.delete(0, END)
     new_nurse_id_input.delete(0, END)
 
+#Button function
+def SaveNewPatient(name, admission_date, treatment_needs):
+    patient = Patient.create_patient(name, admission_date, treatment_needs)
+    add_to_patient_directory(name, admission_date, treatment_needs, patient.severity_vector)
+    assign_to_this_nurse = assign_patient_to_nurse(patient)
+    notification_label.config(text=f"Patient {getattr(patient, 'name', patient)} was assigned to nurse {getattr(assign_to_this_nurse, 'name', assign_to_this_nurse)}")
+    OpenNewWindow(notification_window, patient_input_window) 
+    patient_name_input.delete(0, END)
+    patient_date_input.delete(0, END)
+    patient_treatment_input.delete(0, END)
 
 #Function to open new window and close old window
 def OpenNewWindow(open_window, close_window):
@@ -494,7 +605,7 @@ def OpenNewWindow(open_window, close_window):
     open_window.deiconify()
 
 #Function to refresh nurse directory
-def add_to_nurse_directory(name, id):
+def add_to_nurse_directory(name, id, nurse):
     next_row = nurse_directory_frame.grid_size()[1]
     nurse_label = Label(nurse_directory_frame,
                         text=f"Name: {name},   |    ID: {id},     |  Profile:",
@@ -502,29 +613,35 @@ def add_to_nurse_directory(name, id):
                         bg="#DB7E0E",
                         fg="White")
     nurse_label.grid(row=next_row, column=0, padx=10, pady=10)
+    
     nurse_profile_button = Button(nurse_directory_frame,
                                 text="View Profile",
                                 bg="#ECBD83",
                                 fg="Black",
                                 width=10,
-                                #command=lambda : OpenNewWindow(nurse_list[nurse].nurse_profile, nurse_directory_window)
+                                command=lambda : OpenNewWindow(nurse.nurse_profile, nurse_directory_window)
                                     )
     nurse_profile_button.grid(row=next_row, column=1, padx=10, pady=10)
     #add args to this function when called to use info from nurse entries
 
-#Call function to get patient info
-
+#Function to refresh patient directory
+def add_to_patient_directory(name, admission_date, treatment_needs, severity_vector):
+    patient_label = Label(patient_directory_frame,
+                        text=f"Name: {name}, Admission Date: {admission_date}, Treatments: {treatment_needs}, Severity: {severity_vector}",
+                        font=("Arial", 12),
+                        bg="#DB7E0E",
+                        fg="White")
+    patient_label.pack()
 
 patient_input_window.withdraw()
 new_nurse_window.withdraw()
 nurse_directory_window.withdraw()
-
-
-
-
+patient_directory_window.withdraw()
+notification_window.withdraw()
 
 menu_window.mainloop()
 patient_input_window.mainloop()
 new_nurse_window.mainloop()
 nurse_directory_window.mainloop()
-
+patient_directory_window.mainloop()
+notification_window.mainloop()
