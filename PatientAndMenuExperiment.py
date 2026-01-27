@@ -29,11 +29,11 @@ menu_workload_frame = Frame(menu_window,
                           borderwidth=5,
                           width=300,
                           height=100)
-menu_workload_frame.place(x=350, y=150)
+menu_workload_frame.place(x=450, y=150)
 
 #Labels
 
-menu_welcome_text = "hello fellow nurses"  # Placeholder for dynamic nurse name
+menu_welcome_text = "UTK Nursing Portal"  # Placeholder for dynamic nurse name
 menu_title = Label(menu_window,
                 text=menu_welcome_text,
                 font=("Arial", 24),
@@ -46,7 +46,7 @@ menu_title = Label(menu_window,
 menu_title.place(x=500, y=100, anchor=CENTER)
 
 menu_workload_text = Label(menu_workload_frame,
-                        text="hello",
+                        text="Portal Menu",
                         font=("Arial", 12),
                         bg="#DB7E0E",
                         fg="White",
