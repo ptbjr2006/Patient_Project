@@ -1,5 +1,8 @@
+from dataclasses import dataclass
 from tkinter import *
-import pdb
+from tkinter import filedialog
+from typing import List
+import csv
 
 
 '''
@@ -58,13 +61,13 @@ menu_workload_text.pack()
 
 #Buttons
 
-menu_button_nurse_prof = Button(menu_button_frame,
-                                text="My Profile",
-                                bg="#ECBD83",
-                                fg="Black",
-                                width=20,
-                                height=5)    
-menu_button_nurse_prof.place(x=50, y=50)
+# menu_button_nurse_prof = Button(menu_button_frame,
+#                                 text="My Profile",
+#                                 bg="#ECBD83",
+#                                 fg="Black",
+#                                 width=20,
+#                                 height=5)    
+# menu_button_nurse_prof.place(x=50, y=50)
 #what if on this page we display the nurse's assigned patients and workload etc?
 
 menu_button_new_patient = Button(menu_button_frame,
@@ -74,7 +77,7 @@ menu_button_new_patient = Button(menu_button_frame,
                                 fg="Black",
                                 width=20,
                                 height=5)   
-menu_button_new_patient.place(x=50, y=50)
+menu_button_new_patient.place(x=25, y=50)
 
 menu_button_new_nurse = Button(menu_button_frame,
                                      text="New Nurse Profile",
@@ -83,7 +86,7 @@ menu_button_new_nurse = Button(menu_button_frame,
                                      command=lambda : OpenNewWindow(new_nurse_window, menu_window),
                                      width=20,
                                      height=5)
-menu_button_new_nurse.place(x=50, y=150)
+menu_button_new_nurse.place(x=25, y=150)
 
 menu_button_nurse_directory = Button(menu_button_frame,
                                      text="Nurse Directory",
@@ -92,7 +95,7 @@ menu_button_nurse_directory = Button(menu_button_frame,
                                      command=lambda : OpenNewWindow(nurse_directory_window, menu_window),
                                      width=20,
                                      height=5)
-menu_button_nurse_directory.place(x=200, y=150)
+menu_button_nurse_directory.place(x=175, y=150)
 
 menu_button_patient_directory = Button(menu_button_frame,
                                      text="Patient Directory",
@@ -101,8 +104,16 @@ menu_button_patient_directory = Button(menu_button_frame,
                                      command=lambda : OpenNewWindow(patient_directory_window, menu_window),
                                      width=20,
                                      height=5)
-menu_button_patient_directory.place(x=200, y=50)
+menu_button_patient_directory.place(x=175, y=50)
 
+menu_button_import_nurse_data = Button(menu_button_frame,
+                            command=lambda : select_nurse_data(),
+                            text="Import Nurse Data",
+                            bg="#ECBD83",
+                            fg="Black",
+                            width=20,
+                            height=5)
+menu_button_import_nurse_data.place(x=325, y=50)
 
 '''
                                             NURSE DIRECTORY WINDOW
@@ -372,11 +383,11 @@ notification_button.place(x=80, y=100)
 '''
                                                 NURSE CLASS
 '''
-
+@dataclass
 class Nurse:
-    def __init__(self, name, id):
-        self.name = name
-        self.id = id
+    def __init__(self, name : str, id : int):
+        self.name = name.strip()
+        self.id = int(id)
         self.patient_list = []
         self.workload = 0
         self.severity_workload = [0, 0, 0]
@@ -443,7 +454,7 @@ class Nurse:
         return nurse
     
     def __repr__(self):
-        return f"{self.name}"
+        return f"{self.name}, ID: {self.id}"
     
     def refresh_patient_display(self):
     # Clear existing labels
@@ -588,7 +599,7 @@ def SaveNewNurse(name, id):
     new_nurse_name_input.delete(0, END)
     new_nurse_id_input.delete(0, END)
 
-#Button function
+#Button function to save new patient and assign to nurse
 def SaveNewPatient(name, admission_date, treatment_needs):
     patient = Patient.create_patient(name, admission_date, treatment_needs)
     add_to_patient_directory(name, admission_date, treatment_needs, patient.severity_vector)
@@ -603,6 +614,29 @@ def SaveNewPatient(name, admission_date, treatment_needs):
 def OpenNewWindow(open_window, close_window):
     close_window.withdraw()
     open_window.deiconify()
+
+def select_nurse_data():
+    nurse_data = filedialog.askopenfilename(
+        title="Select a CSV file",
+        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+    )
+    load_nurse(nurse_data)
+    return nurse_data
+
+def load_nurse(nurse_data: str) -> List[Nurse]:
+    with open(nurse_data, 'r', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            nurse = Nurse(
+                name=row['name'],
+                id=row['id']
+            )
+            nurse_list.append(nurse)
+            add_to_nurse_directory(nurse.name, nurse.id, nurse)
+    return nurse_list
+
+
+#Function to read data into nurse list, directory
 
 #Function to refresh nurse directory
 def add_to_nurse_directory(name, id, nurse):
