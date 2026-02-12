@@ -75,7 +75,7 @@ menu_button_new_patient = Button(menu_button_frame,
                                 text="New Patient",
                                 bg="#ECBD83",
                                 fg="Black",
-                                width=20,
+                                width=15,
                                 height=5)   
 menu_button_new_patient.place(x=25, y=50)
 
@@ -84,7 +84,7 @@ menu_button_new_nurse = Button(menu_button_frame,
                                      bg="#ECBD83",
                                      fg="black",
                                      command=lambda : OpenNewWindow(new_nurse_window, menu_window),
-                                     width=20,
+                                     width=15,
                                      height=5)
 menu_button_new_nurse.place(x=25, y=150)
 
@@ -93,7 +93,7 @@ menu_button_nurse_directory = Button(menu_button_frame,
                                      bg="#ECBD83",
                                      fg="black",
                                      command=lambda : OpenNewWindow(nurse_directory_window, menu_window),
-                                     width=20,
+                                     width=15,
                                      height=5)
 menu_button_nurse_directory.place(x=175, y=150)
 
@@ -102,7 +102,7 @@ menu_button_patient_directory = Button(menu_button_frame,
                                      bg="#ECBD83",
                                      fg="black",
                                      command=lambda : OpenNewWindow(patient_directory_window, menu_window),
-                                     width=20,
+                                     width=15,
                                      height=5)
 menu_button_patient_directory.place(x=175, y=50)
 
@@ -111,13 +111,24 @@ menu_button_import_nurse_data = Button(menu_button_frame,
                             text="Import Nurse Data",
                             bg="#ECBD83",
                             fg="Black",
-                            width=20,
+                            width=15,
                             height=5)
 menu_button_import_nurse_data.place(x=325, y=50)
 
-'''
-                                            NURSE DIRECTORY WINDOW
-'''
+menu_button_import_patient_data = Button(menu_button_frame,
+                            command=lambda : select_patient_data(),
+                            text="Import Patient Data",
+                            bg="#ECBD83",
+                            fg="Black",
+                            width=15,
+                            height=5)
+menu_button_import_patient_data.place(x=325, y=150)
+
+
+
+
+#                                             NURSE DIRECTORY WINDOW
+
 
 nurse_directory_window = Tk()
 nurse_directory_window.geometry("1000x600")
@@ -170,10 +181,6 @@ patient_directory_exit_button = Button(patient_directory_window,
                                     height=2)
 patient_directory_exit_button.place(x=30, y=20)
 
-
-'''
-                                            PATIENT INPUT WINDOW
-'''
 # PATIENT INPUT WINDOW
 
 patient_data_file = []
@@ -247,9 +254,7 @@ patient_treatment_input.place(x=15, y=330)
         
         
 
-        #self.patient_name = patient_name_input.get()
-        #self.admission_date = patient_date_input.get()
-        #self.treatment_needs = list(map(int, patient_treatment_input.get().split()))
+
 
 
 patient_cancel_input_button = Button(patient_input_window,
@@ -273,9 +278,9 @@ new_patient_save_button = Button(patient_input_frame,
 new_patient_save_button.place(x=400, y=350)
 
 
-'''
-                                                NEW NURSE WINDOW
-'''
+
+#                                               NEW NURSE WINDOW
+
 
 nurse_list = []
 
@@ -357,7 +362,7 @@ notification_frame = Frame(notification_window,
                     bg="#DB7E0E",
                     relief=RIDGE,
                     borderwidth=5,
-                    width=300,
+                    width=500,
                     height=200)
 notification_frame.place(x=200, y=150, anchor=CENTER)
 
@@ -493,7 +498,10 @@ class Patient:
     
     @classmethod
     def create_patient(cls, name, date, treatment_needs):
-        treatment_needs = list(map(int, treatment_needs.split()))
+        treatment_needs = list(map(int, treatment_needs.split())) if treatment_needs else []
+        # Validate exactly 9 treatment needs (one for each category)
+        if len(treatment_needs) != 9:
+            raise ValueError(f"Treatment needs must have exactly 9 values, got {len(treatment_needs)}: {treatment_needs}")
         patient = Patient(name, date, treatment_needs)
         patient_data_file.append(patient)
         
@@ -635,6 +643,29 @@ def load_nurse(nurse_data: str) -> List[Nurse]:
             add_to_nurse_directory(nurse.name, nurse.id, nurse)
     return nurse_list
 
+def select_patient_data():
+    patient_data = filedialog.askopenfilename(
+        title="Select a CSV file",
+        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+    )
+    load_patient(patient_data)
+    return patient_data
+
+#Function to open file dialog and load patient data
+def load_patient(patient_data: str) -> List[Patient]:
+    with open(patient_data, 'r', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            patient = Patient.create_patient(
+                name=row.get('name', row.get('Name', '')),
+                date=row.get('admission_date', row.get('Admission Date', '')),
+                treatment_needs=row.get('treatment needs', row.get('Treatment Needs', ''))
+            )
+            print(patient.patient_name)
+            patient_data_file.append(patient)
+            assign_patient_to_nurse(patient)
+            add_to_patient_directory(patient.patient_name, patient.admission_date, patient.treatment_needs, patient.severity_vector)
+    return patient_data_file
 
 #Function to read data into nurse list, directory
 
