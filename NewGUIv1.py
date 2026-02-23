@@ -1,12 +1,13 @@
+from email import header
+from pydoc import text
 import sys
-from PyQt5.QtWidgets import QApplication, QFrame, QComboBox, QWidget, QLabel, QLineEdit, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout # type: ignore
+from PyQt5.QtWidgets import QApplication, QFrame, QComboBox, QWidget, QLabel, QLineEdit, QGridLayout, QPushButton, QHBoxLayout, QScrollArea, QVBoxLayout # type: ignore
 from PyQt5.QtGui import QFont, QPixmap # type: ignore
 from PyQt5.QtCore import Qt
 
 #Window Classes
 
-    #Login Window
-
+#Login Window
 class LoginWindow(QWidget):
     def __init__(self, manager):
         super().__init__()
@@ -84,7 +85,6 @@ QFrame {
         self.label.setText("Button clicked!")
 
 #Menu Window Class
-
 class MenuWindow(QWidget):
     def __init__(self, manager):
         super().__init__()
@@ -129,7 +129,7 @@ class MenuWindow(QWidget):
         # Add 4 buttons in a 2x2 layout
         self.btn1 = QPushButton("My Profile")
         self.btn1.setFont(QFont("Verdana", 20))
-
+        self.btn1.clicked.connect(lambda : self.manager.switch(ProfileWindow))
         self.btn2 = QPushButton("New Patient")
         self.btn2.setFont(QFont("Verdana", 20))
         self.btn2.clicked.connect(lambda : self.manager.switch(NewPatientWindow))
@@ -137,6 +137,7 @@ class MenuWindow(QWidget):
         self.btn3.setFont(QFont("Verdana", 20))
 
         self.btn4 = QPushButton("Patient Directory")
+        self.btn4.clicked.connect(lambda : self.manager.switch(PatientDirectoryWindow))
         self.btn4.setFont(QFont("Verdana", 20))
 
 
@@ -152,7 +153,6 @@ class MenuWindow(QWidget):
         self.setLayout(layout)
 
 #New Patient Window Class
-
 class NewPatientWindow(QWidget):
     def __init__(self, manager):
         super().__init__()
@@ -172,10 +172,6 @@ class NewPatientWindow(QWidget):
         top_frame.setLayout(top_frame_layout)
         layout.addWidget(top_frame)
         top_frame_layout.setAlignment(Qt.AlignTop)
-
-
-
-
 
         bottom_frame = QFrame()
         bottom_frame_layout = QHBoxLayout()
@@ -278,12 +274,12 @@ class NewPatientWindow(QWidget):
         selection_frame.setStyleSheet("""
             QFrame {
                 background-color: #f77f00;
-                border-radius: 20px;
+                border-radius: 15px;
                 border: 2px solid #cccccc;
                 }""")
         selection_frame.setFixedSize(1200, 900)
         treatment_title = QLabel("Select Treatment needs:")
-        treatment_title.setFont(QFont("Verdana", 20))
+        treatment_title.setFont(QFont("Verdana", 15))
         treatment_title.setStyleSheet("""
                     QLabel{
                         background-color: #D3D3D3;
@@ -296,9 +292,9 @@ class NewPatientWindow(QWidget):
         treatment_types = ["Neurological:", "Psychosocial:", "Safety:", "Hemodynamic \nStability:", "Drains:", "ADLs:", "Meds:", "Wound Care:", "Discharge:"]
         
         for i in range(len(treatment_types)):
-            print(i)
+            
             treatment_label = QLabel(treatment_types[i])
-            treatment_label.setFont(QFont("Verdana", 20))
+            treatment_label.setFont(QFont("Verdana", 15 ))
             treatment_label.setAlignment(Qt.AlignTop)
             treatment_label.setStyleSheet("""
                     QLabel{
@@ -319,8 +315,8 @@ class NewPatientWindow(QWidget):
                         selection-background-color: #f77f00;
                         }""")
             selection_layout.addWidget(dropdown, (2+2*(i//3)), i%3, alignment=Qt.AlignTop)
-'''
-# Profile Window Class
+
+#Profile Window Class
 class ProfileWindow(QWidget):
     def __init__(self, manager):
         super().__init__()
@@ -330,21 +326,29 @@ class ProfileWindow(QWidget):
         self.setGeometry(600, 400, 1800, 1000)
         layout = QVBoxLayout()
         self.setLayout(layout)
+        self.setStyleSheet("background-color: #D3D3D3;")
+
+        top_frame = QFrame()
+        top_frame_layout = QHBoxLayout()
+        top_frame.setLayout(top_frame_layout)
+
         self.return_button = QPushButton("Return to Menu")
         self.return_button.setFixedSize(200,100)
         self.return_button.clicked.connect(lambda : self.manager.switch(MenuWindow))
-        layout.addWidget(self.return_button, alignment=Qt.AlignTop | Qt.AlignLeft)
+        top_frame_layout.addWidget(self.return_button, alignment=Qt.AlignTop | Qt.AlignLeft)
+
 
         profile_label = QLabel("Profile for: Nurse [Name]")
         profile_label.setFont(QFont("Verdana", 28))
+        profile_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         profile_label.setStyleSheet("color: black;")
-        profile_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(profile_label)
+        top_frame_layout.addWidget(profile_label)
 
-        
+        layout.addWidget(top_frame)
 
         workload_frame = QFrame()
         workload_layout = QGridLayout()
+        workload_frame.setFixedSize(1500, 800)
         workload_frame.setStyleSheet("""
             QFrame {
                 background-color: #f77f00;
@@ -353,9 +357,157 @@ class ProfileWindow(QWidget):
                 }""")
         workload_frame.setLayout(workload_layout)
         layout.addWidget(workload_frame, alignment=Qt.AlignCenter)
-
+        
         #Workload Frame Widgets
-'''
+
+        # ---------- TOP ROW: LABELS ----------
+        label1 = QLabel("Last Workload")
+        label1.setAlignment(Qt.AlignCenter)
+        label1.setFixedSize(600,50)
+        label1.setFont(QFont("Verdana", 15))
+        label1.setStyleSheet("""background-color: #D3D3D3""")
+        label2 = QLabel("Today's Workload")
+        label2.setAlignment(Qt.AlignCenter)
+        label2.setFixedSize(600,50)
+        label2.setFont(QFont("Verdana", 15))
+        label2.setStyleSheet("""background-color: #D3D3D3""")
+
+        workload_layout.addWidget(label1, 0, 0)
+        workload_layout.addWidget(label2, 0, 1)
+
+        #For patient in today's list of patients, add widget
+        #For patient in yesterday's list of patients, add widget
+        #At end of each day save today's list to yesterday's list and clear today's list
+        # Left VBox
+        left_box = QVBoxLayout()
+        left_box.addWidget(QLabel("Left VBox Item 1"))
+        left_box.addWidget(QLabel("Left VBox Item 2"))
+
+        # Right VBox
+        right_box = QVBoxLayout()
+        right_box.addWidget(QLabel("Right VBox Item 1"))
+        right_box.addWidget(QLabel("Right VBox Item 2"))
+
+        # Add the VBoxes to the grid using QWidget containers
+        left_container = QWidget()
+        left_container.setLayout(left_box)
+
+        right_container = QWidget()
+        right_container.setLayout(right_box)
+
+        workload_layout.addWidget(left_container, 1, 0)
+        workload_layout.addWidget(right_container, 1, 1)
+
+#Patient Directory Window Class
+class PatientDirectoryWindow(QWidget):
+    def __init__(self, manager):
+        super().__init__()
+        self.manager = manager
+
+        self.setWindowTitle("Patient Directory") 
+        self.setGeometry(600, 400, 1800, 1000)
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        self.setStyleSheet("background-color: #D3D3D3;")
+
+        top_frame = QFrame()
+        top_frame_layout = QHBoxLayout()
+        top_frame.setLayout(top_frame_layout)
+        layout.addWidget(top_frame)
+        top_frame_layout.setAlignment(Qt.AlignTop)
+
+        bottom_frame = QFrame()
+        bottom_frame_layout = QVBoxLayout()
+        bottom_frame.setLayout(bottom_frame_layout)
+        layout.addWidget(bottom_frame)
+        bottom_frame_layout.setAlignment(Qt.AlignBottom)
+
+        bottom_frame.setStyleSheet("""
+            QFrame {
+                background-color: #f77f00;
+                border-radius: 20px;
+                border: 2px solid #cccccc;
+                }""")
+        
+
+        self.return_button = QPushButton("Return to Menu")
+        self.return_button.setFixedSize(200,100)
+        self.return_button.clicked.connect(lambda : self.manager.switch(MenuWindow))
+        top_frame_layout.addWidget(self.return_button, alignment=Qt.AlignTop | Qt.AlignLeft)
+
+
+        profile_label = QLabel("Patient Directory")
+        profile_label.setFont(QFont("Verdana", 28))
+        profile_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        profile_label.setStyleSheet("color: black;")
+        top_frame_layout.addWidget(profile_label)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        bottom_frame_layout.addWidget(scroll)
+
+        content = QWidget()
+        scroll.setWidget(content)
+        content_layout = QVBoxLayout()
+        content.setLayout(content_layout)
+
+        header = QFrame()
+        header_layout = QHBoxLayout()
+        header.setLayout(header_layout)
+        header.setStyleSheet("""
+        QFrame {
+        background-color: #e0e0e0;
+        border-radius: 8px;
+        }""")
+
+        labels = ["Patient Name", "MRN", "DOB", "Room Number", "View Patient"]
+        for text in labels:
+            lbl = QLabel(text)
+            lbl.setStyleSheet("font-weight: bold; font-size: 30px;")
+            header_layout.addWidget(lbl, stretch=1)
+            lbl.setAlignment(Qt.AlignCenter)
+        header_layout.addStretch()
+        
+     
+
+        content_layout.addWidget(header)
+
+        for i in range(20):
+            row = QFrame()
+            row_layout = QHBoxLayout()
+            row.setLayout(row_layout)
+
+        #Placeholder patient data, replace with loop through patient list
+            row_layout.setContentsMargins(4, 2, 4, 2)
+            row_layout.setSpacing(4)
+
+            name = QLabel(f"Patient {i+1}")
+            mrn = QLabel(f"MRN00{i+1}")
+            dob = QLabel("01/01/1970")
+            room = QLabel(f"Room {100+i}")
+            for lbl in (name, mrn, dob, room):
+                lbl.setStyleSheet("font-size: 26px; padding: 0px; border: none;")
+
+            row_layout.addWidget(name, stretch=2, alignment=Qt.AlignCenter)
+            row_layout.addWidget(mrn, stretch=1, alignment=Qt.AlignCenter)
+            row_layout.addWidget(dob, stretch=2, alignment=Qt.AlignCenter)
+            row_layout.addWidget(room, stretch=2)
+
+            row_layout.addStretch()
+
+            view_btn = QPushButton("View Patient")
+            view_btn.setFixedSize(180, 50)
+            view_btn.setFont(QFont("Verdana", 10))
+            view_btn.setStyleSheet("""
+                QPushButton {
+                    border-radius: 15px;
+                    }""")
+            row_layout.addWidget(view_btn, alignment=Qt.AlignCenter)
+
+            content_layout.addWidget(row)
+
+
+
 
 #Window Manager Class
 
