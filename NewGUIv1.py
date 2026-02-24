@@ -1,17 +1,19 @@
-from email import header
-from pydoc import text
 import sys
+import hashlib
 from PyQt5.QtWidgets import QApplication, QFrame, QComboBox, QWidget, QLabel, QLineEdit, QGridLayout, QPushButton, QHBoxLayout, QScrollArea, QVBoxLayout # type: ignore
 from PyQt5.QtGui import QFont, QPixmap # type: ignore
 from PyQt5.QtCore import Qt
 
+
 #Window Classes
+
 
 #Login Window
 class LoginWindow(QWidget):
-    def __init__(self, manager):
+    def __init__(self, manager, data_manager):
         super().__init__()
         self.manager = manager
+        self.data_manager = data_manager
 
         self.setWindowTitle("Sample PyQt Window")
         self.setGeometry(600, 400, 1800, 1000)
@@ -66,7 +68,7 @@ QFrame {
         #Button Setup
 
         self.button = QPushButton("Login")
-        self.button.clicked.connect(lambda: self.manager.switch(MenuWindow))
+        self.button.clicked.connect(lambda: self.attempt_login())
         self.frame_layout.addWidget(self.button, alignment=Qt.AlignCenter)
         self.button.setFixedSize(200,100)
 
@@ -79,16 +81,33 @@ QFrame {
 """)
 
 
-    def login_click(self):
-        #run for loop of usernames and for loop of passwords
-        #send to Admin version or nurse version
-        self.label.setText("Button clicked!")
+    
+    def attempt_login(self):
+        user_id = self.user_entry.text()
+        password = self.password_entry.text()
+
+        print("\n--- LOGIN BUTTON DEBUG ---")
+        print("USER ENTERED ID:", repr(user_id))
+        print("USER ENTERED PW:", repr(password))
+
+        user = self.data_manager.verify_login(user_id, password)
+
+        print("VERIFY_LOGIN RETURNED:", user, type(user))
+
+        if user is None:
+            self.error_label.setText("Invalid credentials")
+            print("Login failed for user:", user_id)
+            return
+
+        # Pass the user object to the next window
+        self.manager.login_success(user)  
 
 #Menu Window Class
 class MenuWindow(QWidget):
-    def __init__(self, manager):
+    def __init__(self, manager, data_manager):
         super().__init__()
         self.manager = manager
+        self.data_manager = data_manager
 
         #Window Setup
         self.setWindowTitle("Main Menu")
@@ -154,9 +173,10 @@ class MenuWindow(QWidget):
 
 #New Patient Window Class
 class NewPatientWindow(QWidget):
-    def __init__(self, manager):
+    def __init__(self, manager, data_manager):
         super().__init__()
         self.manager = manager
+        self.data_manager = data_manager
 
         
         #Window Setup
@@ -318,9 +338,10 @@ class NewPatientWindow(QWidget):
 
 #Profile Window Class
 class ProfileWindow(QWidget):
-    def __init__(self, manager):
+    def __init__(self, manager, data_manager):
         super().__init__()
         self.manager = manager
+        self.data_manager = data_manager
 
         self.setWindowTitle("My Profile") 
         self.setGeometry(600, 400, 1800, 1000)
@@ -400,9 +421,10 @@ class ProfileWindow(QWidget):
 
 #Patient Directory Window Class
 class PatientDirectoryWindow(QWidget):
-    def __init__(self, manager):
+    def __init__(self, manager, data_manager):
         super().__init__()
         self.manager = manager
+        self.data_manager = data_manager
 
         self.setWindowTitle("Patient Directory") 
         self.setGeometry(600, 400, 1800, 1000)
@@ -506,22 +528,584 @@ class PatientDirectoryWindow(QWidget):
 
             content_layout.addWidget(row)
 
+#Admin Menu Window Class
+class AdminMenuWindow(QWidget):
+    def __init__(self, manager, data_manager, admin_user):
+        super().__init__()
+        self.manager = manager
+        self.data_manager = data_manager
+        self.admin_user = admin_user
 
+        #Window Setup
+        self.setWindowTitle("Admin Menu")
+        self.setGeometry(600, 400, 1800, 1000)
+        self.setStyleSheet("background-color: #D3D3D3;")
+
+        #Layout
+        layout = QVBoxLayout()
+        layout.setSpacing(20)
+
+        #Title Label
+        title = QLabel("Admin Menu")
+        title.setFont(QFont("Verdana", 28))
+        title.setStyleSheet("color: black;")
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+        
+        top_bar = QHBoxLayout()
+
+        #Buttons
+        top_button = QPushButton("Top Left")
+        top_button.setFixedSize(120, 40)
+        top_bar.addWidget(top_button, alignment=Qt.AlignLeft)
+
+        frame = QFrame()
+        frame.setStyleSheet("""
+            QFrame {
+                background-color: #f77f00;
+                border-radius: 20px;
+                border: 2px solid #cccccc;
+            }
+        """)
+        frame.setFixedSize(1200, 600)
+
+        grid_layout = QGridLayout()
+        frame.setLayout(grid_layout)
+
+        # Add 6 buttons in a 2x3 layout
+
+        self.btn1 = QPushButton("New \n Nurse")
+        self.btn1.clicked.connect(lambda: self.manager.switch(NewNurseWindow))
+        self.btn1.setFont(QFont("Verdana", 15))
+
+        self.btn2 = QPushButton("Import \n Nurses")
+        self.btn2.clicked.connect(lambda: self.manager.switch(ImportNursesWindow))
+        self.btn2.setFont(QFont("Verdana", 15))
+        
+        self.btn3 = QPushButton("Nurse \n Directory")
+        self.btn3.clicked.connect(lambda: self.manager.switch(NurseDirectoryWindow))
+        self.btn3.setFont(QFont("Verdana", 15))
+
+        self.btn4 = QPushButton("Patient \n Directory")
+        self.btn4.clicked.connect(lambda: self.manager.switch(PatientDirectoryWindow))
+        self.btn4.setFont(QFont("Verdana", 15))
+
+        self.btn5 = QPushButton("Assign \n Patients")
+        self.btn5.setFont(QFont("Verdana", 15))
+        
+        self.btn6 = QPushButton("Import \n Patients")
+        self.btn6.setFont(QFont("Verdana", 15))
+
+        grid_layout.addWidget(self.btn1, 0, 0)
+        grid_layout.addWidget(self.btn2, 0, 1)
+        grid_layout.addWidget(self.btn3, 0, 2)
+        grid_layout.addWidget(self.btn4, 1, 0)
+        grid_layout.addWidget(self.btn5, 1, 1)
+        grid_layout.addWidget(self.btn6, 1, 2)
+
+        for btn in self.btn1, self.btn2, self.btn3, self.btn4, self.btn5, self.btn6:
+            btn.setFixedSize(300,200)
+        
+        layout.addWidget(frame, alignment=Qt.AlignCenter)
+        self.setLayout(layout)
+
+#New Nurse Window Class
+class NewNurseWindow(QWidget):
+    def __init__(self, manager , data_manager):
+        super().__init__()
+        self.manager = manager
+        self.data_manager = data_manager
+
+        # Window Setup
+        self.setWindowTitle("New Nurse")
+        self.setGeometry(600, 400, 1800, 1000)
+        self.setStyleSheet("background-color: #D3D3D3;")
+
+        # Main Layout
+        main_layout = QVBoxLayout()
+        self.setLayout(main_layout)
+
+        # Title + Return Button Layout 
+        top_bar = QHBoxLayout()
+        top_bar.setSpacing(20)
+
+        return_button = QPushButton("Return to \n Menu")
+        return_button.setFont(QFont("Verdana", 10))
+        return_button.setFixedSize(200, 100)
+        return_button.clicked.connect(self.return_to_admin)
+
+        title = QLabel("Add New Nurse")
+        title.setFont(QFont("Verdana", 28))
+        title.setAlignment(Qt.AlignCenter)
+
+        # Add title and return button to top bar
+        top_bar.addWidget(return_button, alignment=Qt.AlignLeft | Qt.AlignTop, stretch=1)
+        top_bar.addWidget(title, alignment=Qt.AlignLeft | Qt.AlignTop, stretch=2)
+
+        main_layout.addLayout(top_bar)
+        main_layout.addStretch(1)
+
+        # Form Frame (orange card)
+        form_frame = QFrame()
+        form_frame.setStyleSheet("""
+            QFrame {
+                background-color: #f77f00;
+                border-radius: 20px;
+                border: 2px solid #cccccc;
+            }
+        """)
+        form_frame.setFixedSize(1000, 600)
+
+        form_layout = QVBoxLayout()
+        form_layout.setAlignment(Qt.AlignCenter)
+        form_frame.setLayout(form_layout)
+
+        main_layout.addWidget(form_frame, alignment=Qt.AlignCenter)
+        main_layout.addStretch(2)
+
+        # Input Fields
+        self.name_field = QLineEdit()
+        self.name_field.setPlaceholderText("Nurse Name")
+        self.name_field.setFixedSize(650, 100)
+
+        self.id_field = QLineEdit()
+        self.id_field.setPlaceholderText("Nurse ID")
+        self.id_field.setFixedSize(650, 100)
+
+        self.unit_field = QLineEdit()
+        self.unit_field.setPlaceholderText("Assigned Unit")
+        self.unit_field.setFixedSize(650, 100)
+
+        # Style for all fields
+        field_style = """
+            QLineEdit {
+                background-color: white;
+                font-size: 28px;
+                font-family: Verdana;
+                padding: 8px;
+                border: 1px solid #aaa;
+                border-radius: 6px;
+            }
+        """
+
+        for field in (self.name_field, self.id_field, self.unit_field):
+            field.setStyleSheet(field_style)
+            form_layout.addWidget(field, alignment=Qt.AlignCenter)
+
+        # Save Button
+        save_button = QPushButton("Save Nurse")
+        save_button.setFont(QFont("Verdana", 16))
+        save_button.setFixedSize(350, 100)
+        form_layout.addWidget(save_button, alignment=Qt.AlignCenter)
+        save_button.clicked.connect(self.save_nurse)
+
+    def save_nurse(self):
+        name = self.name_field.text().strip()
+        nurse_id = self.id_field.text().strip()
+        unit = self.unit_field.text().strip()
+
+        if not name or not nurse_id or not unit:
+            print("All fields required")
+            return
+        
+        add_nurse(name, nurse_id, unit, working=True)
+        print("Nurse saved!")
+
+
+    def return_to_admin(self):
+        self.manager.switch(AdminWindow)   
+
+#Nurse Directory
+class NurseDirectoryWindow(QWidget):
+    def __init__(self, manager, data_manager):
+        super().__init__()
+        self.manager = manager
+        self.data_manager = data_manager
+
+
+        self.setWindowTitle("Nurse Directory")
+        self.setGeometry(600, 400, 1800, 1000)
+        self.setStyleSheet("background-color: #D3D3D3;")
+
+        # MAIN LAYOUT
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        # --- TOP FRAME ---
+        top_frame = QFrame()
+        top_frame_layout = QHBoxLayout()
+        top_frame.setLayout(top_frame_layout)
+        layout.addWidget(top_frame)
+        top_frame_layout.setAlignment(Qt.AlignTop)
+
+        # Return Button
+        return_button = QPushButton("Return to Menu")
+        return_button.setFixedSize(200, 100)
+        return_button.clicked.connect(self.return_to_admin)
+        top_frame_layout.addWidget(return_button, alignment=Qt.AlignTop | Qt.AlignLeft, stretch=1)
+
+        # Title
+        title = QLabel("Nurse Directory")
+        title.setFont(QFont("Verdana", 28))
+        title.setAlignment(Qt.AlignCenter)
+        top_frame_layout.addWidget(title, alignment=Qt.AlignTop | Qt.AlignLeft, stretch=2)
+
+        # --- BOTTOM ORANGE FRAME ---
+        bottom_frame = QFrame()
+        bottom_frame_layout = QVBoxLayout()
+        bottom_frame.setLayout(bottom_frame_layout)
+        layout.addWidget(bottom_frame)
+
+        bottom_frame.setStyleSheet("""
+            QFrame {
+                background-color: #f77f00;
+                border-radius: 20px;
+                border: 2px solid #cccccc;
+            }
+        """)
+
+        # --- SCROLL AREA ---
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        bottom_frame_layout.addWidget(scroll)
+
+        content = QWidget()
+        scroll.setWidget(content)
+        content_layout = QVBoxLayout()
+        content.setLayout(content_layout)
+
+        # --- HEADER ROW ---
+        header = QFrame()
+        header_layout = QHBoxLayout()
+        header.setLayout(header_layout)
+        header.setStyleSheet("""
+            QFrame {
+                background-color: #e0e0e0;
+                border-radius: 8px;
+            }
+        """)
+
+        labels = ["Nurse Name", "ID", "Unit", "Status", "Patients"]
+        for text in labels:
+            lbl = QLabel(text)
+            lbl.setStyleSheet("font-weight: bold; font-size: 30px;")
+            lbl.setAlignment(Qt.AlignCenter)
+            header_layout.addWidget(lbl, stretch=1)
+
+        content_layout.addWidget(header)
+
+        # --- LOAD NURSES ---
+        nurses = load_nurses()
+        if not nurses:
+            nurses = [
+                {"name": "Alice Brown", "id": "N001", "unit": "ICU", "working": True},
+                {"name": "David Smith", "id": "N002", "unit": "ER", "working": False},
+                {"name": "Maria Lopez", "id": "N003", "unit": "Pediatrics", "working": True},
+            ]
+
+        nurses = sorted(nurses, key=lambda x: x["name"])
+
+        # --- NURSE ROWS ---
+        for nurse in nurses:
+            row = QFrame()
+            row_layout = QHBoxLayout()
+            row.setLayout(row_layout)
+
+            # Row background color
+            if nurse["working"]:
+                row.setStyleSheet("background-color: lightgreen; border-radius: 8px;")
+            else:
+                row.setStyleSheet("background-color: lightgray; border-radius: 8px;")
+
+            # Labels
+            name = QLabel(nurse["name"])
+            nurse_id = QLabel(nurse["id"])
+            unit = QLabel(nurse["unit"])
+            status = QLabel("Working" if nurse["working"] else "Not Working")
+
+            for lbl in (name, nurse_id, unit, status):
+                lbl.setStyleSheet("font-size: 26px; padding: 0px; border: none;")
+                lbl.setAlignment(Qt.AlignCenter)
+                row_layout.addWidget(lbl, stretch=1)
+
+            # Patients Button
+            view_btn = QPushButton("View Patients")
+            view_btn.setFixedSize(180, 50)
+            view_btn.setFont(QFont("Verdana", 10))
+            row_layout.addWidget(view_btn, alignment=Qt.AlignCenter)
+
+            content_layout.addWidget(row)
+
+    def return_to_admin(self):
+        self.manager.switch(AdminWindow)
+
+#Import Nurse
+class ImportNursesWindow(QWidget):
+    def __init__(self, manager, data_manager):
+        super().__init__()
+        self.manager = manager
+        self.data_manager = data_manager
+
+
+        self.setWindowTitle("Import Nurses")
+        self.setGeometry(600, 400, 1800, 1000)
+        self.setStyleSheet("background-color: #D3D3D3;")
+
+        #Main Layout
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        #Top Bar
+        top_bar = QHBoxLayout()
+        top_bar.setSpacing(20)
+
+        return_button = QPushButton("Return to \n Menu")
+        return_button.setFont(QFont("Verdana", 10))
+        return_button.setFixedSize(200, 100)
+        return_button.clicked.connect(self.return_to_admin)
+
+        title = QLabel("Import Nurses")
+        title.setFont(QFont("Verdana", 28))
+        title.setAlignment(Qt.AlignCenter)
+
+        top_bar.addWidget(return_button, alignment=Qt.AlignLeft | Qt.AlignTop, stretch=1)
+        top_bar.addWidget(title, alignment=Qt.AlignLeft | Qt.AlignTop, stretch=2)
+
+        layout.addLayout(top_bar)
+        layout.addStretch(1)
+
+        # Form Frame (orange card)
+        form_frame = QFrame()
+        form_frame.setStyleSheet("""
+            QFrame {
+                background-color: #f77f00;
+                border-radius: 20px;
+                border: 2px solid #cccccc;
+            }
+        """)
+        form_frame.setFixedSize(1000, 600)
+
+        form_layout = QVBoxLayout()
+        form_layout.setAlignment(Qt.AlignCenter)
+        form_frame.setLayout(form_layout)
+
+        layout.addWidget(form_frame, alignment=Qt.AlignCenter)
+        layout.addStretch(2)
+
+        import_button = QPushButton("Choose \n CSV File")
+        import_button.setFont(QFont("Verdana", 15))
+        import_button.setFixedSize(600, 200)
+        import_button.clicked.connect(self.import_csv)
+        form_layout.addWidget(import_button)
+
+        self.status_label = QLabel("")
+        self.status_label.setFont(QFont("Verdana", 16))
+        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setStyleSheet("background-color: transparent;")
+        form_layout.addWidget(self.status_label)
+
+    def import_csv(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select CSV File", "", "CSV Files (*.csv)")
+
+        if not file_path:
+            self.status_label.setText("No file selected.")
+            return
+
+        try:
+            with open(file_path, "r", newline="", encoding="utf-8") as file:
+                reader = csv.DictReader(file)
+
+                for row in reader:
+                    name = row.get("name", "").strip()
+                    nurse_id = row.get("id", "").strip()
+                    unit = row.get("unit", "").strip()
+                    working = row.get("working", "1").strip() == "1"
+
+                    if name and nurse_id and unit:
+                        add_nurse(name, nurse_id, unit, working)
+
+            self.status_label.setText("Import successful!")
+
+        except Exception as e:
+            self.status_label.setText(f"Error: {str(e)}")
+
+    def return_to_admin(self):
+        self.manager.switch(AdminWindow)
+
+
+#Manager Classes
 
 
 #Window Manager Class
-
 class WindowManager:
-    def __init__(self):
+    def __init__(self, data_manager):
+          self.data_manager = data_manager
           self.current = None
+    
+    def login_success(self, user):
+        print("\n--- LOGIN SUCCESS DEBUG ---")
+        print("USER OBJECT:", user)
+        print("USER TYPE:", type(user))
 
-    def switch(self, new_window):
+        if isinstance(user, Nurse):
+            print("ROUTING TO NURSE WINDOW")
+            self.switch(MenuWindow, user)
+
+        elif isinstance(user, Admin):
+            print("ROUTING TO ADMIN WINDOW")
+            self.switch(AdminMenuWindow, user)
+
+    def switch(self, new_window, *args):
         if self.current is not None:
           self.current.close()
-        self.current = new_window(self)
+        self.current = new_window(self, self.data_manager, *args)
         self.current.show()
-     
+
+#Data Manager Class  
+class DataManager:
+    def __init__(self):
+        self.nurses = {}   # nurse_id → Nurse object
+        self.admins = {}   # admin_id → Admin object
+
+    # -----------------------------
+    # Password hashing helper
+    # -----------------------------
+    def hash_password(self, raw_password):
+        return hashlib.sha256(raw_password.encode()).hexdigest()
+
+    # -----------------------------
+    # Login verification
+    # -----------------------------
+    def verify_login(self, user_id, raw_password):
+        """Return Nurse/Admin object if credentials are valid, else None."""
+
+        #debugging
+        print("\n--- VERIFY LOGIN DEBUG ---")
+        print("NURSES:", self.nurses.keys())
+        print("ADMINS:", self.admins.keys())
+        print("USER ENTERED:", repr(user_id))
+
+
+        hashed = self.hash_password(raw_password)
+        print("HASHED INPUT:", hashed)
+
+
+
+        # 1. Check nurses
+        if user_id in self.nurses:
+            nurse = self.nurses[user_id]
+            print("MATCHED NURSE:", nurse)
+            print("STORED HASH:", nurse.hashed_password)
+
+            if nurse.hashed_password == hashed:
+                print("PASSWORD MATCHED (NURSE)")
+                return nurse
+            print("PASSWORD MISMATCH (NURSE)")
+
+            
+        # 2. Check admins
+        if user_id in self.admins:
+            admin = self.admins[user_id]
+            print("MATCHED ADMIN:", admin)
+            print("STORED HASH:", admin.hashed_password)
+
+            if admin.hashed_password == hashed:
+                print("PASSWORD MATCHED (ADMIN)")
+                return admin
         
+        # 3. Invalid login
+        print("NO MATCH FOUND")
+        return None
+
+
+#Object Classes
+
+
+#Nurse Class
+class Nurse:
+    def __init__(self, nurse_id, name, hashed_password,
+                 assigned_patients=None, last_workload=None,
+                 shift=None):
+        self.nurse_id = nurse_id
+        self.name = name
+        self.hashed_password = hashed_password
+        self.role = "nurse"   # used by DataManager + WindowManager
+
+        # Lists of Patient objects
+        self.assigned_patients = assigned_patients or []
+        self.last_workload = last_workload or []
+
+    #Add patient to assigned patients list
+    def add_patient(self, patient):
+        if patient not in self.assigned_patients:
+            self.assigned_patients.append(patient)
+    
+    #Remove patient from assigned patients list
+    def remove_patient(self, patient):
+        if patient in self.assigned_patients:
+            self.assigned_patients.remove(patient)
+    
+    #At end of each shift, move current workload to last_workload and clear assigned_patients
+    def clear_assignments(self):
+        """Move current workload to last_workload and reset."""
+        self.last_workload = self.assigned_patients.copy()
+        self.assigned_patients = []
+
+    '''This could be useful for csv reading. Should this belong in the datamanager instead?'''
+    # def from_dict(self, data):
+    #     """Load from a dictionary."""
+    #     self.nurse_id = data["nurse_id"]
+    #     self.name = data["name"]
+    #     self.hashed_password = data["hashed_password"]
+    #     self.role = data["role"]
+    #     self.shift = data.get("shift", None)
+    #     self.skill_level = data.get("skill_level", 0)
+
+
+    def to_dict(self):
+        """Convert to a serializable dictionary for saving."""
+        return {
+            "nurse_id": self.nurse_id,
+            "name": self.name,
+            "hashed_password": self.hashed_password,
+            "role": self.role,
+            "assigned_patients": [p.patient_id for p in self.assigned_patients],
+            "last_workload": [p.patient_id for p in self.last_workload],
+            "shift": self.shift,
+            "skill_level": self.skill_level
+        }
+
+    def __repr__(self):
+        return f"<Nurse {self.nurse_id}: {self.name}>"
+
+#Admin Class
+class Admin:
+    def __init__(self, admin_id, name, hashed_password, permissions=None):
+        self.admin_id = admin_id
+        self.name = name
+        self.hashed_password = hashed_password
+        self.role = "admin"   # used by DataManager + WindowManager
+    
+    
+    def to_dict(self):
+        return {
+            "admin_id": self.admin_id,
+            "name": self.name,
+            "hashed_password": self.hashed_password,
+            "role": self.role,
+            "permissions": self.permissions
+        }
+
+#Patient Class        
+class Patient:
+    def __init__(self, patient_id, name, dob, room_number,
+                 acuity=None, mobility=None, isolation=None,
+                 special_needs=None, notes=None):
+        
+        self.patient_id = patient_id
+        self.name = name
+        self.dob = dob
+        self.room_number = room_number
 
         
 
@@ -542,7 +1126,20 @@ def open_new_window(current_window, new_window_class):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     
-    manager = WindowManager()
+    data_manager = DataManager()
+    manager = WindowManager(data_manager)
+
+        # TEST ADMIN
+    admin = Admin(
+        admin_id="A001",
+        name="Admin User",
+        hashed_password=data_manager.hash_password("adminpass"),
+        permissions=["all"]
+    )
+    data_manager.admins[admin.admin_id] = admin
+
+
     manager.switch(LoginWindow)
 
     sys.exit(app.exec_()) 
+
