@@ -1,0 +1,32 @@
+live notes:
+Fix look of import nurse page
+	Kerry doing this
+
+Need to create patient profiles with save patient button
+
+patient as arg for patient's button >> patient profile page?
+	
+
+
+import csv and QFileDialog for ImportNurseWindow
+
+
+
+Notes on patient profiles:
+Nurse_assigned_to attribute?
+
+Storage
+	In a dict
+	add & get
+Ok so Patient profile window class
+	Takes patient as arg
+	Patient window gonna take a while to design
+	Nurse receives patient & patient is assigned to nurse
+Write to q's: Do we give nurses assignment permissions?
+
+We need to move UI instantion under init_ui() and out from __init__()
+
+Fix returntoadmin on ImportNursesWindow
+
+MOST RECENT ERROR:
+ 'DataManager' object has no attribute 'add_patient'
